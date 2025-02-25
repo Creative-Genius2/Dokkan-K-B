@@ -67,21 +67,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Fix for Error Code 4: Add proper CORS headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  res.header('Content-Type', 'application/json');
-  next();
-});
-
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
@@ -110,17 +95,6 @@ app.post('/', (req, res) => {
       id: req.body?.id || null
     });
   }
-  console.log(`[DEBUG] Received request: ${JSON.stringify(req.body)}`);
-  
-  // Error code 4 fix: Validate JSON-RPC format explicitly
-  if (!req.body || !req.body.jsonrpc || req.body.jsonrpc !== '2.0' || !req.body.method) {
-    console.error('[ERROR] Invalid JSON-RPC request format');
-    return res.status(200).json({
-      jsonrpc: '2.0',
-      error: { code: -32600, message: 'Invalid Request' },
-      id: req.body?.id || null
-    });
-  }
   
   const { method, params, id } = req.body;
   activeConnections.add(res);
@@ -134,9 +108,11 @@ app.post('/', (req, res) => {
   const handlers = {
     initialize: () => {
       console.log('[DEBUG] Claude Desktop initialize request received');
+      
+      // Error code 4 fix: Precise format expected by Claude Desktop
       const response = {
         protocolVersion: '2024-02-24',
-        capabilities: { 
+        capabilities: {
           dokkan: {
             cards: true,
             events: true,
@@ -147,16 +123,6 @@ app.post('/', (req, res) => {
             missions: true,
             items: true
           }
-        },
-        serverInfo: { 
-          name: 'dokkan-mcp', 
-          version: '1.0.0',
-          status: 'ready'
-        }
-      };
-      console.log('[DEBUG] Sending initialize response:', JSON.stringify(response));
-      return response;
-    }
         },
         serverInfo: { 
           name: 'dokkan-mcp', 
