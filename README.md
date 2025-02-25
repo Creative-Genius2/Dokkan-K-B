@@ -1,4 +1,4 @@
-# Dokkan MCP
+# Dokkan K-B (Knowledge-Base)
 
 A Model Context Protocol server for Dokkan Battle data that connects Desktop Claude to both wiki sources.
 
